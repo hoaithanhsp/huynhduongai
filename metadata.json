@@ -1,0 +1,7 @@
+{
+  "name": "Gia Sư KHTN Thông Minh ver2",
+  "description": "An intelligent science tutor platform for middle school students, featuring AI-powered chat assistance, progress tracking, and structured learning paths for Physics, Chemistry, and Biology.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

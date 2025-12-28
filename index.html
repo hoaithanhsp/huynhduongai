@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="vi" class="light">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GIA SƯ KHTN CẤP THCS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700;800;900&family=Noto+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" integrity="sha384-n8MVd4RsNIU0tAv4ct0nTaAbDJwPJzDEaqSD1odI+WdtXRGWt2kTvGFasHpSy3SV" crossorigin="anonymous">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0d9488",
+                        "primary-hover": "#0f766e",
+                        "primary-light": "#ccfbf1",
+                        "accent": "#f59e0b",
+                        "background-light": "#f0fdfa",
+                        "background-dark": "#0f1923",
+                        "surface-light": "#ffffff",
+                        "surface-dark": "#1e293b",
+                    },
+                    fontFamily: {
+                        "display": ["Lexend", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem", 
+                        "lg": "1.5rem", 
+                        "xl": "2rem", 
+                        "2xl": "2.5rem",
+                        "3xl": "3rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        "soft": "0 10px 40px -10px rgba(13, 148, 136, 0.15)",
+                        "glow": "0 0 20px rgba(13, 148, 136, 0.2)",
+                        "card": "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)"
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: "Lexend", sans-serif; }
+        .material-symbols-outlined { font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24; }
+        .blob-bg {
+            background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuBON8G0skWKLv6Jwig_BrGjHVqLbwdKh-1hD2NadtVLmhAm7uwnnG4LjUdelyvm_dAMKTQIYLJ6iNdP0EGmzV-fIkY5nmoyP9s93Trc72pJ835aEkuMLtZxizvbPuoDi9V-C7THBIDSzTgCNapsaJlb4ZcqUI3qoXgsSA9MzkYF1xg0IS811rgg-LsDOYZ4METpuON4FE4ZC3vNOlElxtnezIFRl4NYa6IBJot_tdQR-48WfIwdUX-AdwTHuezghVvdl-uI8OBHGujO);
+            background-repeat: no-repeat;
+            background-position: center;
+            background-size: cover;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 4px; }
+        
+        /* KaTeX overrides for better integration */
+        .katex-display { margin: 0.5em 0; overflow-x: auto; overflow-y: hidden; }
+        .katex { font-size: 1.1em; }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3",
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "react-router-dom": "https://esm.sh/react-router-dom@^7.11.0",
+    "katex": "https://esm.sh/katex@0.16.9/dist/katex.mjs"
+  }
+}
+</script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-white transition-colors duration-200 min-h-screen flex flex-col">
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+</body>
+</html>
