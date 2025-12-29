@@ -14,6 +14,7 @@ const GradeExercises: React.FC = () => {
   const [currentQuiz, setCurrentQuiz] = useState<Question[] | null>(null);
   const [quizStep, setQuizStep] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [confirmedSteps, setConfirmedSteps] = useState<Record<number, boolean>>({}); // Track confirmed answers
   const [showResult, setShowResult] = useState(false);
   const [currentLessonTitle, setCurrentLessonTitle] = useState("");
   const [startTime, setStartTime] = useState<number>(0);
@@ -105,6 +106,7 @@ const GradeExercises: React.FC = () => {
         setCurrentQuiz(questions);
         setQuizStep(0);
         setUserAnswers({});
+        setConfirmedSteps({}); // Reset confirmed steps
         setShowResult(false);
         setStartTime(Date.now()); // Start precise timestamp for calculation
         setTimer(0); // Reset visual timer
@@ -120,7 +122,19 @@ const GradeExercises: React.FC = () => {
   };
 
   const handleAnswer = (answer: string) => {
+    if (confirmedSteps[quizStep]) return; // Lock if confirmed
     setUserAnswers(prev => ({ ...prev, [quizStep]: answer }));
+    
+    // Auto-confirm for Multiple Choice and True/False
+    const qType = currentQuiz?.[quizStep]?.type;
+    if (qType === 'multiple_choice' || qType === 'true_false') {
+       setConfirmedSteps(prev => ({ ...prev, [quizStep]: true }));
+    }
+  };
+
+  const handleConfirmShortAnswer = () => {
+     if (!userAnswers[quizStep]) return;
+     setConfirmedSteps(prev => ({ ...prev, [quizStep]: true }));
   };
 
   const handleFinishQuiz = () => {
@@ -220,11 +234,17 @@ const GradeExercises: React.FC = () => {
     );
   }
 
+  // Render Variables for current question state
+  const currentQuestion = currentQuiz ? currentQuiz[quizStep] : null;
+  const isStepConfirmed = confirmedSteps[quizStep] || false;
+  const currentAnswer = userAnswers[quizStep];
+  const isCurrentCorrect = currentQuestion && currentAnswer && currentAnswer.toLowerCase().trim() === currentQuestion.correctAnswer.toLowerCase().trim();
+
   return (
     <div className="p-6 md:p-8 lg:p-10 max-w-7xl mx-auto flex flex-col gap-8 relative">
-      {/* Loading Overlay for Quiz */}
+      {/* Loading Overlay for Quiz - Z-Index increased to 120 to cover everything including Result Modal */}
       {isGenerating && (
-        <div className="fixed inset-0 z-[100] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
+        <div className="fixed inset-0 z-[120] bg-white/90 dark:bg-slate-900/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center">
           <div className="size-24 mb-8 relative">
             <div className="absolute inset-0 border-4 border-teal-100 rounded-full"></div>
             <div className="absolute inset-0 border-4 border-teal-600 rounded-full border-t-transparent animate-spin"></div>
@@ -450,59 +470,157 @@ const GradeExercises: React.FC = () => {
               </div>
 
               <div className="grid gap-4">
-                {currentQuiz[quizStep].type === 'multiple_choice' && currentQuiz[quizStep].options?.map((opt, i) => (
-                  <button 
-                    key={i}
-                    onClick={() => handleAnswer(opt)}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${
-                      userAnswers[quizStep] === opt ? 'border-teal-600 bg-teal-50 dark:bg-teal-900/20' : 'border-slate-100 dark:border-slate-700 hover:border-teal-200'
-                    }`}
-                  >
-                    <div className={`size-8 rounded-full border-2 flex items-center justify-center font-bold shrink-0 ${userAnswers[quizStep] === opt ? 'border-teal-600 text-teal-600' : 'border-slate-200 text-slate-400'}`}>
-                      {String.fromCharCode(65 + i)}
-                    </div>
-                    <span className="font-medium text-slate-700 dark:text-slate-200">
-                      <MathRenderer content={opt} />
-                    </span>
-                  </button>
-                ))}
+                {currentQuiz[quizStep].type === 'multiple_choice' && currentQuiz[quizStep].options?.map((opt, i) => {
+                  const isSelected = userAnswers[quizStep] === opt;
+                  const isTheCorrectAnswer = opt.toLowerCase().trim() === currentQuiz[quizStep].correctAnswer.toLowerCase().trim();
+                  
+                  let borderColor = 'border-slate-100 dark:border-slate-700 hover:border-teal-200';
+                  let bgColor = '';
+                  let textColor = 'text-slate-700 dark:text-slate-200';
+                  
+                  if (isStepConfirmed) {
+                      if (isTheCorrectAnswer) {
+                          borderColor = 'border-emerald-500';
+                          bgColor = 'bg-emerald-50 dark:bg-emerald-900/20';
+                          textColor = 'text-emerald-700 dark:text-emerald-300';
+                      } else if (isSelected) {
+                          borderColor = 'border-rose-500';
+                          bgColor = 'bg-rose-50 dark:bg-rose-900/20';
+                          textColor = 'text-rose-700 dark:text-rose-300';
+                      } else {
+                         borderColor = 'border-slate-100 dark:border-slate-800 opacity-50';
+                      }
+                  } else if (isSelected) {
+                      borderColor = 'border-teal-600';
+                      bgColor = 'bg-teal-50 dark:bg-teal-900/20';
+                  }
+
+                  return (
+                    <button 
+                      key={i}
+                      onClick={() => handleAnswer(opt)}
+                      disabled={isStepConfirmed}
+                      className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center gap-4 ${borderColor} ${bgColor} ${textColor}`}
+                    >
+                      <div className={`size-8 rounded-full border-2 flex items-center justify-center font-bold shrink-0 ${
+                        isStepConfirmed 
+                          ? (isTheCorrectAnswer ? 'border-emerald-500 text-emerald-600' : (isSelected ? 'border-rose-500 text-rose-600' : 'border-slate-200 text-slate-400'))
+                          : (isSelected ? 'border-teal-600 text-teal-600' : 'border-slate-200 text-slate-400')
+                      }`}>
+                        {String.fromCharCode(65 + i)}
+                      </div>
+                      <span className="font-medium">
+                        <MathRenderer content={opt} />
+                      </span>
+                      {isStepConfirmed && isTheCorrectAnswer && <span className="material-symbols-outlined text-emerald-500 ml-auto">check_circle</span>}
+                      {isStepConfirmed && isSelected && !isTheCorrectAnswer && <span className="material-symbols-outlined text-rose-500 ml-auto">cancel</span>}
+                    </button>
+                  );
+                })}
 
                 {currentQuiz[quizStep].type === 'true_false' && (
                   <div className="grid grid-cols-2 gap-4">
-                    {['Đúng', 'Sai'].map(val => (
-                      <button 
-                        key={val}
-                        onClick={() => handleAnswer(val)}
-                        className={`p-6 rounded-2xl border-2 font-black transition-all ${
-                          userAnswers[quizStep] === val ? 'border-teal-600 bg-teal-50 text-teal-600' : 'border-slate-100 dark:border-slate-700 hover:border-teal-200'
-                        }`}
-                      >
-                        {val}
-                      </button>
-                    ))}
+                    {['Đúng', 'Sai'].map(val => {
+                        const isSelected = userAnswers[quizStep] === val;
+                        const isTheCorrectAnswer = val.toLowerCase() === currentQuiz[quizStep].correctAnswer.toLowerCase();
+                        
+                        let borderColor = 'border-slate-100 dark:border-slate-700 hover:border-teal-200';
+                        let bgColor = '';
+                        let textColor = 'text-slate-800 dark:text-white';
+
+                        if (isStepConfirmed) {
+                            if (isTheCorrectAnswer) {
+                                borderColor = 'border-emerald-500';
+                                bgColor = 'bg-emerald-50 dark:bg-emerald-900/20';
+                                textColor = 'text-emerald-700 dark:text-emerald-300';
+                            } else if (isSelected) {
+                                borderColor = 'border-rose-500';
+                                bgColor = 'bg-rose-50 dark:bg-rose-900/20';
+                                textColor = 'text-rose-700 dark:text-rose-300';
+                            } else {
+                                borderColor = 'border-slate-100 dark:border-slate-800 opacity-50';
+                            }
+                        } else if (isSelected) {
+                            borderColor = 'border-teal-600';
+                            bgColor = 'bg-teal-50 text-teal-600';
+                        }
+
+                        return (
+                          <button 
+                            key={val}
+                            onClick={() => handleAnswer(val)}
+                            disabled={isStepConfirmed}
+                            className={`p-6 rounded-2xl border-2 font-black transition-all ${borderColor} ${bgColor} ${textColor}`}
+                          >
+                            {val}
+                          </button>
+                        );
+                    })}
                   </div>
                 )}
 
                 {currentQuiz[quizStep].type === 'short_answer' && (
                   <input 
                     type="text"
+                    disabled={isStepConfirmed}
                     placeholder="Nhập câu trả lời của bạn..."
-                    className="w-full p-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-100 dark:border-slate-700 rounded-2xl focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-800 dark:text-white"
+                    className={`w-full p-4 bg-slate-50 dark:bg-slate-900 border-2 rounded-2xl focus:ring-teal-500 focus:border-teal-500 font-bold text-slate-800 dark:text-white ${
+                        isStepConfirmed 
+                        ? (isCurrentCorrect ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/10' : 'border-rose-500 bg-rose-50 dark:bg-rose-900/10')
+                        : 'border-slate-100 dark:border-slate-700'
+                    }`}
                     value={userAnswers[quizStep] || ''}
                     onChange={(e) => handleAnswer(e.target.value)}
                   />
                 )}
               </div>
 
-              <div className="mt-12 flex justify-end">
-                <button 
-                  disabled={!userAnswers[quizStep]}
-                  onClick={nextStep}
-                  className="px-10 py-4 bg-teal-600 text-white rounded-2xl font-black shadow-lg shadow-teal-500/20 hover:bg-teal-700 disabled:opacity-50 transition-all flex items-center gap-2"
-                >
-                  {quizStep === 14 ? 'Kết quả' : 'Tiếp theo'}
-                  <span className="material-symbols-outlined">arrow_forward</span>
-                </button>
+              {/* Immediate Feedback Section */}
+              {isStepConfirmed && currentQuestion && (
+                 <div className={`mt-6 p-4 rounded-2xl border-2 ${isCurrentCorrect ? 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/10 dark:border-emerald-900' : 'bg-rose-50 border-rose-200 dark:bg-rose-900/10 dark:border-rose-900'} animate-in fade-in slide-in-from-top-2`}>
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className={`material-symbols-outlined text-2xl ${isCurrentCorrect ? 'text-emerald-600' : 'text-rose-600'}`}>
+                            {isCurrentCorrect ? 'check_circle' : 'cancel'}
+                        </span>
+                        <span className={`font-black text-lg ${isCurrentCorrect ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}`}>
+                            {isCurrentCorrect ? 'Chính xác! 🎉' : 'Chưa chính xác! 😔'}
+                        </span>
+                    </div>
+                    
+                    {!isCurrentCorrect && (
+                        <div className="mb-3 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 p-3 rounded-xl border border-rose-100 dark:border-rose-900/50 shadow-sm">
+                            <span className="font-bold text-sm text-slate-500 uppercase tracking-wide block mb-1">Đáp án đúng</span>
+                            <span className="font-bold text-lg text-emerald-600 dark:text-emerald-400"><MathRenderer content={currentQuestion.correctAnswer} className="inline" /></span>
+                        </div>
+                    )}
+
+                    <div className="text-slate-600 dark:text-slate-400 text-sm bg-white/50 dark:bg-slate-900/50 p-3 rounded-xl">
+                        <span className="font-bold block mb-1 text-slate-800 dark:text-white uppercase text-xs tracking-wide">Giải thích chi tiết</span>
+                        <MathRenderer content={currentQuestion.explanation} />
+                    </div>
+                 </div>
+              )}
+
+              <div className="mt-8 flex justify-end">
+                {currentQuiz[quizStep].type === 'short_answer' && !isStepConfirmed ? (
+                    <button 
+                      disabled={!userAnswers[quizStep]}
+                      onClick={handleConfirmShortAnswer}
+                      className="px-10 py-4 bg-indigo-600 text-white rounded-2xl font-black shadow-lg shadow-indigo-500/20 hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-2"
+                    >
+                      Kiểm tra
+                      <span className="material-symbols-outlined">check</span>
+                    </button>
+                ) : (
+                    <button 
+                      disabled={!isStepConfirmed}
+                      onClick={nextStep}
+                      className="px-10 py-4 bg-teal-600 text-white rounded-2xl font-black shadow-lg shadow-teal-500/20 hover:bg-teal-700 disabled:opacity-50 transition-all flex items-center gap-2"
+                    >
+                      {quizStep === 14 ? 'Kết quả' : 'Tiếp theo'}
+                      <span className="material-symbols-outlined">arrow_forward</span>
+                    </button>
+                )}
               </div>
             </div>
           </div>
@@ -542,9 +660,17 @@ const GradeExercises: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <button 
                 onClick={() => handleStartQuiz(currentLessonTitle)}
-                className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white rounded-2xl font-black hover:bg-slate-200 transition-all"
+                disabled={isGenerating}
+                className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
               >
-                Làm lại
+                {isGenerating ? (
+                  <>
+                     <div className="size-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
+                     <span>Chờ xử lý...</span>
+                  </>
+                ) : (
+                  "Làm lại"
+                )}
               </button>
               <button 
                 onClick={() => {
