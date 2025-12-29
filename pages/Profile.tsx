@@ -22,14 +22,17 @@ const Profile: React.FC = () => {
   const [passwordForm, setPasswordForm] = useState({ current: '', new: '', confirm: '' });
 
   // Fetch Real-time Data from LocalStorage
-  const savedStats = JSON.parse(localStorage.getItem('userStats') || '{"solved": 0, "totalScore": 0, "exerciseTime": 0, "questionsDone": 0, "streak": 0}');
+  const savedStats = JSON.parse(localStorage.getItem('userStats') || '{"solved": 0, "totalScore": 0, "exerciseTime": 0, "questionsDone": 0, "streak": 0, "theoryTime": 0}');
 
   const solvedCount = savedStats.solved;
   const averageScore = solvedCount > 0 ? parseFloat((savedStats.totalScore / solvedCount).toFixed(1)) : 0;
   
   // Time calculation
-  const totalMinutes = savedStats.exerciseTime || 0;
-  const totalHoursNumeric = totalMinutes / 60; // For chart and percentage calculation
+  const totalExerciseMinutes = savedStats.exerciseTime || 0;
+  const totalTheoryMinutes = savedStats.theoryTime || 0;
+  const combinedTotalMinutes = totalExerciseMinutes + totalTheoryMinutes;
+
+  const totalHoursNumeric = combinedTotalMinutes / 60; // For chart and percentage calculation
   
   const questionsDone = savedStats.questionsDone;
   const currentStreak = savedStats.streak || 0;
@@ -66,9 +69,9 @@ const Profile: React.FC = () => {
 
   // Activity Metrics
   const activityMetrics = [
-    { name: 'Học lý thuyết', value: '15 phút', target: '60 phút', percentage: 25, color: 'blue', icon: 'menu_book' },
+    { name: 'Học lý thuyết', value: formatTimeDetailed(totalTheoryMinutes), target: '60 phút', percentage: Math.min(100, Math.round((totalTheoryMinutes / 60) * 100)), color: 'blue', icon: 'menu_book' },
     { name: 'Làm bài tập', value: `${questionsDone} câu`, target: '50 câu', percentage: Math.min(100, Math.round((questionsDone / 50) * 100)), color: 'fuchsia', icon: 'edit_document' },
-    { name: 'Tổng thời gian', value: formatTimeDetailed(totalMinutes), target: '5 giờ', percentage: Math.min(100, Math.round((totalHoursNumeric / 5) * 100)), color: 'emerald', icon: 'schedule' }
+    { name: 'Tổng thời gian', value: formatTimeDetailed(combinedTotalMinutes), target: '5 giờ', percentage: Math.min(100, Math.round((totalHoursNumeric / 5) * 100)), color: 'emerald', icon: 'schedule' }
   ];
 
   // Chart Data (Keeping chart data as numeric Hours for simplicity in visualization)

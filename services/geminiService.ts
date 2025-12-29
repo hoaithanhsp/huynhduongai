@@ -6,7 +6,7 @@ const QUIZ_SCHEMA = {
     type: Type.OBJECT,
     properties: {
       id: { type: Type.NUMBER },
-      type: { type: Type.STRING, description: 'multiple_choice, true_false, or short_answer' },
+      type: { type: Type.STRING, description: 'multiple_choice or true_false' },
       question: { type: Type.STRING },
       options: { 
         type: Type.ARRAY, 
@@ -80,18 +80,21 @@ async function runWithFallback<T>(
 }
 
 export const generateQuiz = async (lessonTitle: string, grade: string) => {
-  const prompt = `Bạn là một chuyên gia giáo dục và gia sư khoa học. Hãy tạo một bộ đề bài tập gồm ĐÚNG 15 câu hỏi cho bài học: "${lessonTitle}" trong chương trình Khoa học tự nhiên lớp ${grade} (Sách Kết nối tri thức).
+  const prompt = `Bạn là một chuyên gia giáo dục và gia sư khoa học nghiêm túc. Hãy tạo một bộ đề bài tập gồm ĐÚNG 15 câu hỏi cho bài học: "${lessonTitle}" trong chương trình Khoa học tự nhiên lớp ${grade} (Sách Kết nối tri thức với cuộc sống).
 
-  Yêu cầu bắt buộc về cấu trúc nội dung:
-  - 5 câu mức độ "nhan_biet" (Dễ).
-  - 5 câu mức độ "thong_hieu" (Trung bình).
-  - 5 câu mức độ "van_dung" (Khó).
-  - Các loại câu hỏi phải trộn lẫn theo các dạng: 
-    1. Trắc nghiệm 4 phương án (type: "multiple_choice", options: ["A...", "B...", "C...", "D..."]).
-    2. Trắc nghiệm Đúng/Sai (type: "true_false", correctAnswer: "Đúng" hoặc "Sai").
-    3. Trả lời ngắn (type: "short_answer", học sinh tự điền đáp án ngắn).
-  - Sử dụng LaTeX cho các công thức hóa học (ví dụ: $H_2O$) hoặc vật lý nếu có.
-  - Phản hồi bằng định dạng JSON chuẩn theo schema.`;
+  Yêu cầu TỐI QUAN TRỌNG:
+  1. Nội dung câu hỏi và đáp án phải CHÍNH XÁC TUYỆT ĐỐI, bám sát từng chi tiết nhỏ trong bài học của sách giáo khoa Kết nối tri thức. Không bịa đặt kiến thức ngoài SGK.
+  2. Đáp án đúng phải là duy nhất và không gây tranh cãi.
+  3. Cấu trúc đề:
+     - 5 câu mức độ "nhan_biet" (Dễ - Nhớ kiến thức SGK).
+     - 5 câu mức độ "thong_hieu" (Trung bình - Hiểu bản chất).
+     - 5 câu mức độ "van_dung" (Khó - Vận dụng giải quyết vấn đề).
+  4. Các loại câu hỏi phải trộn lẫn giữa 2 dạng sau: 
+     - Trắc nghiệm khách quan 4 phương án (type: "multiple_choice", options: ["A...", "B...", "C...", "D..."]).
+     - Trắc nghiệm Đúng/Sai (type: "true_false", correctAnswer: "Đúng" hoặc "Sai").
+  5. TUYỆT ĐỐI KHÔNG tạo câu hỏi trả lời ngắn.
+  6. Sử dụng LaTeX cho các công thức hóa học (ví dụ: $H_2O$) hoặc vật lý nếu có.
+  7. Phản hồi bằng định dạng JSON chuẩn theo schema.`;
 
   return runWithFallback(async (model, ai) => {
     const response = await ai.models.generateContent({
@@ -100,7 +103,7 @@ export const generateQuiz = async (lessonTitle: string, grade: string) => {
       config: {
         responseMimeType: "application/json",
         responseSchema: QUIZ_SCHEMA,
-        temperature: 0.8,
+        temperature: 0.5, // Lower temperature for more accuracy
       }
     });
     

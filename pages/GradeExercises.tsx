@@ -18,12 +18,14 @@ const GradeExercises: React.FC = () => {
   const [showResult, setShowResult] = useState(false);
   const [currentLessonTitle, setCurrentLessonTitle] = useState("");
   const [startTime, setStartTime] = useState<number>(0);
-  const [timer, setTimer] = useState(0); // Real-time seconds counter
+  const [timer, setTimer] = useState(0); // Real-time seconds counter for Quiz
 
   // Theory State
   const [showTheory, setShowTheory] = useState(false);
   const [theoryContent, setTheoryContent] = useState<string>("");
   const [isLoadingTheory, setIsLoadingTheory] = useState(false);
+  const [theoryTimer, setTheoryTimer] = useState(0); // Real-time seconds counter for Theory
+  const [theoryStartTime, setTheoryStartTime] = useState<number>(0);
 
   // Simulation State
   const [showSimConfig, setShowSimConfig] = useState(false);
@@ -33,7 +35,7 @@ const GradeExercises: React.FC = () => {
 
   const currentCurriculum = gradeId ? curriculumData[gradeId] : [];
 
-  // Timer Effect
+  // Quiz Timer Effect
   useEffect(() => {
     let interval: any;
     if (currentQuiz && !showResult) {
@@ -43,6 +45,17 @@ const GradeExercises: React.FC = () => {
     }
     return () => clearInterval(interval);
   }, [currentQuiz, showResult]);
+
+  // Theory Timer Effect
+  useEffect(() => {
+    let interval: any;
+    if (showTheory && !simUrl) { // Only count when reading text, not when simulating (optional choice)
+      interval = setInterval(() => {
+        setTheoryTimer((prev) => prev + 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [showTheory, simUrl]);
 
   // Cleanup Blob URL on unmount or new sim
   useEffect(() => {
@@ -58,11 +71,16 @@ const GradeExercises: React.FC = () => {
     setShowTheory(true);
     setTheoryContent(""); // Reset content
     setIsLoadingTheory(true);
+    
     // Reset Sim State
     setShowSimConfig(false);
     if (simUrl) URL.revokeObjectURL(simUrl);
     setSimUrl(null);
     setSimUserRequest("");
+
+    // Reset Theory Timer
+    setTheoryTimer(0);
+    setTheoryStartTime(Date.now());
 
     try {
       const content = await getLessonTheory(lessonTitle, gradeId);
@@ -72,6 +90,36 @@ const GradeExercises: React.FC = () => {
     } finally {
       setIsLoadingTheory(false);
     }
+  };
+
+  const handleCloseTheory = () => {
+    // Calculate duration and save to localStorage
+    if (theoryStartTime > 0) {
+        const durationMinutes = (Date.now() - theoryStartTime) / 60000;
+        const stats = JSON.parse(localStorage.getItem('userStats') || '{"solved": 0, "totalScore": 0, "exerciseTime": 0, "questionsDone": 0, "streak": 0, "theoryTime": 0}');
+        
+        // Update theoryTime
+        stats.theoryTime = (stats.theoryTime || 0) + durationMinutes;
+        
+        // Also update streak if this is the first activity of the day
+        const today = new Date().toDateString();
+        if (stats.lastActiveDate !== today) {
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            if (stats.lastActiveDate === yesterday.toDateString()) {
+                stats.streak = (stats.streak || 0) + 1;
+            } else {
+                stats.streak = 1;
+            }
+            stats.lastActiveDate = today;
+        }
+
+        localStorage.setItem('userStats', JSON.stringify(stats));
+    }
+
+    setShowTheory(false);
+    setTheoryTimer(0);
+    setTheoryStartTime(0);
   };
 
   const handleStartSimulation = async () => {
@@ -97,6 +145,12 @@ const GradeExercises: React.FC = () => {
   };
 
   const handleStartQuiz = async (lessonTitle: string) => {
+    // If opening quiz from Theory modal, close theory and save time first
+    if (showTheory) {
+        handleCloseTheory();
+        // Slight delay to allow modal close animation if needed, but here we just proceed
+    }
+
     if (!gradeId) return;
     setIsGenerating(true);
     setCurrentLessonTitle(lessonTitle);
@@ -119,6 +173,16 @@ const GradeExercises: React.FC = () => {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // NEW FUNCTION: Retry the SAME quiz (mastery learning)
+  const handleRetryQuiz = () => {
+    setQuizStep(0);
+    setUserAnswers({});
+    setConfirmedSteps({}); // Reset confirmed steps
+    setShowResult(false);
+    setStartTime(Date.now()); // Reset timer logic
+    setTimer(0); // Reset visual timer
   };
 
   const handleAnswer = (answer: string) => {
@@ -263,14 +327,23 @@ const GradeExercises: React.FC = () => {
           <div className="bg-white dark:bg-slate-900 w-full max-w-2xl max-h-[90vh] rounded-3xl shadow-2xl flex flex-col animate-in zoom-in-95 duration-200">
              {/* Header */}
              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-900 z-10 rounded-t-3xl shrink-0">
-                <div>
-                   <h3 className="text-xl font-black text-slate-800 dark:text-white">
-                      {simUrl ? "Mô phỏng trực quan" : "Lý thuyết tóm tắt"}
-                   </h3>
-                   <p className="text-sm font-medium text-teal-600 dark:text-teal-400">{currentLessonTitle}</p>
+                <div className="flex items-center gap-4">
+                    <div>
+                       <h3 className="text-xl font-black text-slate-800 dark:text-white">
+                          {simUrl ? "Mô phỏng trực quan" : "Lý thuyết tóm tắt"}
+                       </h3>
+                       <p className="text-sm font-medium text-teal-600 dark:text-teal-400">{currentLessonTitle}</p>
+                    </div>
+                    {/* Theory Timer Badge */}
+                    {!simUrl && (
+                        <div className="hidden sm:flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-1 rounded-full border border-indigo-100 dark:border-indigo-800 text-indigo-600 dark:text-indigo-300">
+                           <span className="material-symbols-outlined text-[16px] animate-pulse">schedule</span>
+                           <span className="text-xs font-black font-mono pt-0.5">{formatTime(theoryTimer)}</span>
+                        </div>
+                    )}
                 </div>
                 <button 
-                  onClick={() => setShowTheory(false)}
+                  onClick={handleCloseTheory}
                   className="size-10 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 hover:bg-slate-200 hover:text-rose-500 transition-all flex items-center justify-center"
                 >
                   <span className="material-symbols-outlined">close</span>
@@ -402,16 +475,13 @@ const GradeExercises: React.FC = () => {
 
                   <div className="flex gap-2">
                     <button 
-                      onClick={() => setShowTheory(false)}
+                      onClick={handleCloseTheory}
                       className="px-6 py-3 rounded-xl font-bold text-slate-600 hover:bg-white border border-transparent hover:border-slate-200 transition-all"
                     >
                       Đóng
                     </button>
                     <button 
-                      onClick={() => {
-                        setShowTheory(false);
-                        handleStartQuiz(currentLessonTitle);
-                      }}
+                      onClick={() => handleStartQuiz(currentLessonTitle)}
                       className="px-6 py-3 rounded-xl bg-teal-600 text-white font-bold shadow-lg shadow-teal-500/20 hover:bg-teal-700 transition-all flex items-center gap-2"
                     >
                       <span className="material-symbols-outlined text-[18px]">edit_square</span>
@@ -659,18 +729,10 @@ const GradeExercises: React.FC = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <button 
-                onClick={() => handleStartQuiz(currentLessonTitle)}
-                disabled={isGenerating}
-                className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center justify-center gap-2 disabled:opacity-75 disabled:cursor-wait"
+                onClick={handleRetryQuiz}
+                className="py-4 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-white rounded-2xl font-black hover:bg-slate-200 transition-all flex items-center justify-center gap-2"
               >
-                {isGenerating ? (
-                  <>
-                     <div className="size-5 border-2 border-slate-300 border-t-slate-600 rounded-full animate-spin"></div>
-                     <span>Chờ xử lý...</span>
-                  </>
-                ) : (
-                  "Làm lại"
-                )}
+                  Làm lại
               </button>
               <button 
                 onClick={() => {

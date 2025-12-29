@@ -7,6 +7,7 @@ const Home: React.FC = () => {
   const [stats, setStats] = useState({
     questionsDone: 0,
     exerciseTime: 0,
+    theoryTime: 0,
     streak: 0
   });
 
@@ -15,11 +16,12 @@ const Home: React.FC = () => {
     const unsubUser = subscribeToUserUpdates(() => setUser(getUserProfile()));
 
     // Fetch stats from localStorage to sync with Profile
-    const savedStats = JSON.parse(localStorage.getItem('userStats') || '{"solved": 0, "totalScore": 0, "exerciseTime": 0, "questionsDone": 0, "streak": 0}');
+    const savedStats = JSON.parse(localStorage.getItem('userStats') || '{"solved": 0, "totalScore": 0, "exerciseTime": 0, "questionsDone": 0, "streak": 0, "theoryTime": 0}');
     
     setStats({
       questionsDone: savedStats.questionsDone || 0,
       exerciseTime: savedStats.exerciseTime || 0,
+      theoryTime: savedStats.theoryTime || 0,
       streak: savedStats.streak || 0
     });
     
@@ -42,16 +44,18 @@ const Home: React.FC = () => {
     return parts.length > 0 ? parts.join(' ') : '0 giây';
   };
 
-  const totalHoursNumeric = stats.exerciseTime / 60;
+  // Combine times for total
+  const combinedTotalMinutes = stats.exerciseTime + stats.theoryTime;
+  const totalHoursNumeric = combinedTotalMinutes / 60;
 
   // Metrics Logic Copied from Profile for Consistency
   const progressMetrics = [
     { 
       label: 'Học lý thuyết', 
-      val: '15 phút', 
+      val: formatTime(stats.theoryTime), 
       target: 60, // minutes
-      current: 15,
-      percentage: 25, 
+      current: stats.theoryTime,
+      percentage: Math.min(100, Math.round((stats.theoryTime / 60) * 100)), 
       color: 'blue' 
     },
     { 
@@ -64,7 +68,7 @@ const Home: React.FC = () => {
     },
     { 
       label: 'Tổng thời gian', 
-      val: formatTime(stats.exerciseTime), 
+      val: formatTime(combinedTotalMinutes), 
       target: 5, // hours (for progress bar calc)
       current: totalHoursNumeric,
       percentage: Math.min(100, Math.round((totalHoursNumeric / 5) * 100)), 
