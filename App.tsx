@@ -333,11 +333,10 @@ const Sidebar: React.FC = () => {
   return (
     <aside className="hidden lg:flex w-72 flex-col justify-between border-r border-teal-100 dark:border-gray-800 bg-white dark:bg-slate-900 p-6 h-[calc(100vh-73px)] sticky top-[73px]">
       <div className="flex flex-col gap-8">
-        <div className="bg-gradient-to-r from-teal-50 to-white dark:from-gray-800 dark:to-gray-900 p-4 rounded-2xl border border-teal-100 dark:border-gray-700">
-          <h1 className="text-teal-800 dark:text-teal-200 text-base font-extrabold mb-1">Khoa học tự nhiên</h1>
-          <div className="flex items-center gap-2">
-            <span className="px-2 py-0.5 rounded-md bg-teal-100 text-teal-700 text-[10px] font-bold uppercase tracking-wider">Lớp 8</span>
-            <span className="text-slate-500 dark:text-gray-400 text-xs font-medium">Học kỳ 1</span>
+        <div className="bg-gradient-to-r from-teal-50 to-white dark:from-gray-800 dark:to-gray-900 p-4 rounded-2xl border border-teal-100 dark:border-gray-700 flex flex-col items-center text-center">
+          <h1 className="text-teal-800 dark:text-teal-200 text-base font-extrabold mb-1">KHOA HỌC TỰ NHIÊN</h1>
+          <div className="flex items-center justify-center gap-2">
+            <span className="px-2 py-0.5 rounded-md bg-teal-100 text-teal-700 text-[10px] font-bold uppercase tracking-wider">KHỐI LỚP THCS</span>
           </div>
         </div>
         
