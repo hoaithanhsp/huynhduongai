@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { HashRouter, Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import Chat from './pages/Chat';
+import Exercises from './pages/Exercises';
 import GradeExercises from './pages/GradeExercises';
 import Profile from './pages/Profile';
 import About from './pages/About';
@@ -425,7 +426,7 @@ const App: React.FC = () => {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/chat" element={<Chat />} />
-              <Route path="/exercises" element={<Navigate to="/exercises/6" replace />} />
+              <Route path="/exercises" element={<Exercises />} />
               <Route path="/exercises/:gradeId" element={<GradeExercises />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/about" element={<About />} />
