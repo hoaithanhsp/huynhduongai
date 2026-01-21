@@ -75,9 +75,6 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ onClose, isOpen }) => {
               <a href="https://aistudio.google.com/api-keys" target="_blank" rel="noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline font-bold bg-blue-50 px-3 py-1.5 rounded-lg">
                 <span className="material-symbols-outlined text-[14px]">vpn_key</span> Lấy Key tại Google AI Studio
               </a>
-              <a href="https://tinyurl.com/hdsdpmTHT" target="_blank" rel="noreferrer" className="flex items-center gap-1 text-teal-600 hover:underline font-bold bg-teal-50 px-3 py-1.5 rounded-lg">
-                <span className="material-symbols-outlined text-[14px]">help</span> Xem hướng dẫn chi tiết
-              </a>
             </div>
           </div>
 
